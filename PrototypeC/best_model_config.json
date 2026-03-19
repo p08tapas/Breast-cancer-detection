@@ -1,0 +1,6 @@
+{
+    "learning_rate": 0.001,
+    "dropout_rate": 0.3,
+    "dense_units": 512,
+    "use_focal_loss": true
+}

@@ -6,6 +6,7 @@ common/archive/csv/
 *.weights.h5
 *.h5
 
+
 # Python cache
 __pycache__/
 *.pyc
@@ -37,8 +38,7 @@ Thumbs.db
 training_history.png
 confusion_matrix.png
 
-# Model configs (can be regenerated)
-*_config.json
+# Model configs - removed so PrototypeC best_model_config.json can be committed
 
 # Jupyter
 .ipynb_checkpoints/

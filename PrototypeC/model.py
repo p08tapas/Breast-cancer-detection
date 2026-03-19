@@ -6,6 +6,7 @@ from tensorflow.keras.models import Model
 IMG_SIZE = 224
 
 def focal_loss(alpha=0.65, gamma=1.5):
+    
     """Focal loss for handling class imbalance."""
     def loss_fn(y_true, y_pred):
         y_true = tf.cast(y_true, tf.float32)
@@ -27,7 +28,7 @@ def build_model(use_focal_loss=True, learning_rate=5e-4, dropout_rate=0.4, dense
     input_layer = Input(shape=(IMG_SIZE, IMG_SIZE, 3), name='input')
     
     
-    # I am creating the EfficientNetB0 branch
+    # This is whereI am creating the EfficientNetB0 branch
     efficientnet_base = EfficientNetB0(
         include_top=False,
         weights='imagenet',

@@ -132,7 +132,7 @@ def train_model(train_df, test_df, weights_path='best_model.weights.h5', resume_
         steps_per_epoch=steps_per_epoch,
         validation_steps=validation_steps,
         callbacks=callbacks,
-        verbose=0
+        verbose=1
     )
 
 

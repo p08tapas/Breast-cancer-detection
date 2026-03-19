@@ -1,3 +1,5 @@
+import json
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -143,6 +145,27 @@ def evaluate_model(model, test_generator, test_df):
     plt.tight_layout()
     plt.savefig('confusion_matrix.png', dpi=150)
     plt.close()
+
+    # Derived from confusion matrix
+    type_i_error = fp / (fp + tn) if (fp + tn) > 0 else 0
+    type_ii_error = fn / (fn + tp) if (fn + tp) > 0 else 0
+    f1 = 2 * precision * sensitivity / (precision + sensitivity) if (precision + sensitivity) > 0 else 0
+    metrics_json = {
+        'accuracy': float(accuracy),
+        'precision': float(precision),
+        'recall': float(sensitivity),
+        'specificity': float(specificity),
+        'auc': float(auc),
+        'statistical_power': float(statistical_power),
+        'type_i_error': float(type_i_error),
+        'type_ii_error': float(type_ii_error),
+        'f1': float(f1),
+        'optimal_threshold': float(best_threshold),
+        'confusion_matrix': cm.tolist(),
+    }
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(script_dir, 'evaluation_metrics.json'), 'w') as f:
+        json.dump(metrics_json, f, indent=2)
     
     return {
         'accuracy': accuracy,

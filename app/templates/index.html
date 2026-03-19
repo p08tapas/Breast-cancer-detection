@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mammogram Inference APP using Deep Learning</title>
+  <style>
+    /* Base */
+    body {
+      font-family: system-ui, sans-serif;
+      font-weight: 600;
+      background: #0d1117;
+      color: #f0f6fc;
+      margin: 0;
+      padding: 1.5rem;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .container.eval-active {
+      max-width: 960px;
+    }
+
+    /* Headings and text */
+    h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 0.5rem;
+    }
+
+    .sub {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #c9d1d9;
+      margin-bottom: 1rem;
+    }
+
+    /* Cards */
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Form */
+    label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #c9d1d9;
+      margin-bottom: 0.4rem;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      padding: 0.5rem;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #f0f6fc;
+      font-weight: 600;
+    }
+
+    .options {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 0.75rem;
+    }
+
+    .options label {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin: 0;
+      cursor: pointer;
+    }
+
+    /* Buttons */
+    button {
+      margin-top: 1rem;
+      padding: 0.6rem 1.2rem;
+      background: #238636;
+      color: #ffffff;
+      font-weight: 700;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #2ea043;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* Preview and error */
+    .preview {
+      max-width: 100%;
+      max-height: 250px;
+      border-radius: 6px;
+      margin-top: 1rem;
+      border: 1px solid #30363d;
+    }
+
+    .error {
+      font-weight: 600;
+      color: #ff7b72;
+      margin-top: 1rem;
+    }
+
+    /* Results */
+    .result h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 0.5rem;
+    }
+
+    .prob-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #30363d;
+      font-weight: 600;
+    }
+
+    .prob-row:last-child {
+      border-bottom: none;
+    }
+
+    .label-benign {
+      color: #3fb950;
+      font-weight: 700;
+    }
+
+    .label-malignant {
+      color: #ff7b72;
+      font-weight: 700;
+    }
+
+    .bar {
+      height: 6px;
+      background: #30363d;
+      border-radius: 3px;
+      margin-top: 0.2rem;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 3px;
+    }
+
+    .legend {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #c9d1d9;
+      padding: 0.75rem;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+    }
+
+    .disclaimer {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #c9d1d9;
+      margin-top: 1.5rem;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #30363d;
+      margin-bottom: 1rem;
+    }
+
+    .tabs button {
+      padding: 0.5rem 1rem;
+      background: none;
+      font-weight: 600;
+      color: #c9d1d9;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      margin-bottom: -1px;
+    }
+
+    .tabs button:hover {
+      color: #f0f6fc;
+    }
+
+    .tabs button.active {
+      color: #58a6ff;
+      border-bottom-color: #58a6ff;
+      font-weight: 700;
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* Progress */
+    #progressSection {
+      display: none;
+      margin-top: 1rem;
+    }
+
+    #progressSection.visible {
+      display: block;
+    }
+
+
+    
+    .progress-bar-wrap {
+      height: 10px;
+      background: #0d1117;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+
+    .progress-bar-fill {
+      height: 100%;
+      background: #238636;
+      width: 0%;
+      transition: width 0.2s;
+    }
+
+    /* Evaluation tab */
+    .eval-model {
+      margin-bottom: 2rem;
+    }
+
+    .eval-model h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #58a6ff;
+      margin-bottom: 0.5rem;
+    }
+
+    .metrics-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    .metrics-table th,
+    .metrics-table td {
+      padding: 0.4rem 0.6rem;
+      text-align: left;
+      border-bottom: 1px solid #30363d;
+      color: #f0f6fc;
+    }
+
+    .metrics-table th {
+      color: #c9d1d9;
+      font-weight: 600;
+      width: 40%;
+    }
+
+    .eval-imgs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+
+
+
+    .eval-imgs figure {
+      margin: 0;
+    }
+
+    .eval-imgs img {
+      max-width: 100%;
+      width: 480px;
+      border-radius: 6px;
+      border: 1px solid #30363d;
+      cursor: pointer;
+    }
+
+    .eval-imgs img:hover {
+      outline: 2px solid #58a6ff;
+    }
+
+
+
+    .eval-imgs figcaption {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #c9d1d9;
+      margin-top: 0.3rem;
+    }
+
+
+
+    .eval-empty,
+    .eval-intro {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #c9d1d9;
+    }
+
+    .eval-intro {
+      margin-bottom: 1rem;
+    }
+
+    /* Lightbox */
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      cursor: pointer;
+    }
+
+    .lightbox.visible {
+      display: flex;
+    }
+
+
+    .lightbox img {
+      max-width: 95vw;
+      max-height: 95vh;
+      object-fit: contain;
+    }
+  </style>
+</head>
+<body>
+  <div id="mainContainer" class="container">
+    <h1>Mammogram Inference APP using Deep Learning</h1>
+    <p class="sub">Upload a mammogram (JPEG/PNG). Predictions from Prototype A (EfficientNetB0), B (ResNet50), and C (EfficientNetB0 + ResNet50).</p>
+
+    <nav class="tabs">
+      <button type="button" id="tabUpload" class="active">Upload Mammogram</button>
+      <button type="button" id="tabEval">Model Evaluation</button>
+    </nav>
+
+    
+    
+    
+    
+    <div id="panelUpload" class="tab-panel active">
+      <div class="card">
+        <form id="uploadForm">
+          <label for="file">Image file</label>
+          <input type="file" id="file" name="file" accept=".jpg,.jpeg,.png" required>
+          <div class="options">
+            <label><input type="checkbox" name="use_tta_b" checked> TTA for Model B</label>
+            <label><input type="checkbox" name="use_tta_c" checked> TTA for Model C</label>
+          </div>
+          <button type="submit" id="btn">Predict</button>
+        </form>
+        <img id="preview" class="preview" alt="" style="display: none;">
+        <div id="progressSection">
+          <p style="margin:0 0 0.3rem 0;color:#c9d1d9;font-size:0.9rem;font-weight:600">Processing... <span id="progressText">0/1</span></p>
+          <div class="progress-bar-wrap"><div id="progressBar" class="progress-bar-fill"></div></div>
+        </div>
+        <div id="error" class="error" style="display: none;"></div>
+      </div>
+
+      
+      
+      
+      <div id="result" class="card result" style="display: none;">
+        <h2>Results</h2>
+        <div class="legend">
+          <strong>Legend:</strong> % = probability of malignancy. Each model uses its own optimal threshold. ≥ threshold → MALIGNANT; &lt; threshold → BENIGN.
+        </div>
+        <div id="resultBody"></div>
+        <p class="disclaimer">For research/educational use only. Not a substitute for clinical diagnosis.</p>
+      </div>
+    </div>
+
+    
+    <div id="panelEval" class="tab-panel">
+      <p class="eval-intro">Evaluation metrics from each prototype. Run <code>python main.py --mode eval</code> in each Prototype folder to refresh.</p>
+      <div id="evalContent"></div>
+    </div>
+  </div>
+
+  <div id="lightbox" class="lightbox"><img id="lightboxImg" src="" alt="Enlarged"></div>
+
+  
+  
+  
+  <script>
+    const form = document.getElementById('uploadForm');
+    const fileInput = document.getElementById('file');
+    const btn = document.getElementById('btn');
+    const preview = document.getElementById('preview');
+    const errorEl = document.getElementById('error');
+    const resultEl = document.getElementById('result');
+    const resultBody = document.getElementById('resultBody');
+    const progressSection = document.getElementById('progressSection');
+    const progressText = document.getElementById('progressText');
+    const progressBar = document.getElementById('progressBar');
+    const evalContent = document.getElementById('evalContent');
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const mainContainer = document.getElementById('mainContainer');
+
+    
+    
+    
+    
+    function setProgress(cur, tot) {
+      progressBar.style.width = (tot ? (100 * cur / tot) : 0) + '%';
+      progressText.textContent = cur + '/' + tot;
+    }
+
+    fileInput.addEventListener('change', function() {
+      const f = this.files[0];
+      if (!f) return;
+      preview.src = URL.createObjectURL(f);
+      preview.style.display = 'block';
+      errorEl.style.display = 'none';
+      resultEl.style.display = 'none';
+      progressSection.classList.remove('visible');
+    });
+
+    
+    
+    
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const file = fileInput.files[0];
+      if (!file) return;
+      btn.disabled = true;
+      errorEl.style.display = 'none';
+      resultEl.style.display = 'none';
+      progressSection.classList.add('visible');
+      setProgress(0, 1);
+
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('use_tta_b', form.querySelector('[name="use_tta_b"]').checked);
+      fd.append('use_tta_c', form.querySelector('[name="use_tta_c"]').checked);
+
+      (async () => {
+        const res = await fetch('/predict', { method: 'POST', body: fd });
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || res.statusText);
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '', data = null;
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            const obj = JSON.parse(line);
+            if (obj.type === 'progress') setProgress(obj.current, obj.total);
+            else if (obj.type === 'result') { data = obj.data; break; }
+            else if (obj.type === 'error') throw new Error(obj.detail);
+          }
+          if (data) break;
+        }
+        if (buffer.trim()) {
+          const obj = JSON.parse(buffer);
+          if (obj.type === 'result') data = obj.data;
+          else if (obj.type === 'error') throw new Error(obj.detail);
+        }
+
+        if (!data) throw new Error('No result received');
+
+        const probs = data.probabilities || {};
+        const labels = data.labels || {};
+        const thresholds = data.thresholds || {};
+        const defThresh = data.threshold ?? 0.5;
+        const displayNames = data.model_display_names || {};
+        const order = ['PrototypeA', 'PrototypeB', 'PrototypeC'];
+
+        let html = '';
+        for (const name of order) {
+          const p = probs[name];
+          if (p === undefined) continue;
+          const thresh = thresholds[name] ?? defThresh;
+          const label = labels[name] || (p >= thresh ? 'MALIGNANT' : 'BENIGN');
+          const pct = (p * 100).toFixed(1);
+          const cls = label === 'MALIGNANT' ? 'label-malignant' : 'label-benign';
+          html += '<div class="prob-row"><span>' + (displayNames[name] || name) + ' <span class="' + cls + '">' + label + '</span></span><span>' + pct + '%</span></div>';
+          html += '<div class="bar"><div class="bar-fill ' + cls + '" style="width:' + pct + '%;background:' + (label === 'MALIGNANT' ? '#ff7b72' : '#3fb950') + '"></div></div>';
+        }
+        resultBody.innerHTML = html;
+        resultEl.style.display = 'block';
+      })().catch(err => {
+        errorEl.textContent = err.message || 'Request failed';
+        errorEl.style.display = 'block';
+      }).finally(() => {
+        progressSection.classList.remove('visible');
+        btn.disabled = false;
+      });
+    });
+
+    document.getElementById('tabUpload').addEventListener('click', function() {
+      document.getElementById('tabUpload').classList.add('active');
+      document.getElementById('tabEval').classList.remove('active');
+      document.getElementById('panelUpload').classList.add('active');
+      document.getElementById('panelEval').classList.remove('active');
+      mainContainer.classList.remove('eval-active');
+    });
+
+    document.getElementById('tabEval').addEventListener('click', async function() {
+      document.getElementById('tabEval').classList.add('active');
+      document.getElementById('tabUpload').classList.remove('active');
+      document.getElementById('panelEval').classList.add('active');
+      document.getElementById('panelUpload').classList.remove('active');
+      mainContainer.classList.add('eval-active');
+
+      if (evalContent.dataset.loaded !== '1') {
+        evalContent.innerHTML = '<p class="eval-empty">Loading...</p>';
+        (async () => {
+          const res = await fetch('/evaluation');
+          const data = await res.json();
+          const models = data.models || {};
+          if (Object.keys(models).length === 0) {
+            evalContent.innerHTML = '<p class="eval-empty">No evaluation metrics. Run <code>python main.py --mode eval</code> in each Prototype folder.</p>';
+            return;
+          }
+          const order = ['PrototypeA', 'PrototypeB', 'PrototypeC'];
+          let html = '';
+          for (const key of order) {
+            const m = models[key];
+            if (!m) continue;
+            html += '<div class="eval-model card"><h3>' + (m.display_name || key) + '</h3>';
+            html += '<table class="metrics-table"><tbody>';
+            const metrics = [
+              ['Accuracy', m.accuracy], ['Precision', m.precision], ['Recall', m.recall], ['Specificity', m.specificity],
+              ['AUC', m.auc], ['Statistical Power', m.statistical_power], ['Type I Error', m.type_i_error], ['Type II Error', m.type_ii_error],
+              ['F1 Score', m.f1], ['Optimal Threshold', m.optimal_threshold]
+            ];
+            for (const [k, v] of metrics) {
+              if (v === undefined || v === null) continue;
+              const val = k === 'Optimal Threshold' ? (v || 0.5).toFixed(3) : ((v || 0) * 100).toFixed(2) + '%';
+              html += '<tr><th>' + k + '</th><td>' + val + '</td></tr>';
+            }
+            html += '</tbody></table>';
+            html += '<div class="eval-imgs"><figure><img src="/prototypes/' + key + '/confusion_matrix.png" alt="Confusion Matrix" data-enlarge><figcaption>Confusion Matrix (click to enlarge)</figcaption></figure>';
+            html += '<figure><img src="/prototypes/' + key + '/training_history.png" alt="Training History" data-enlarge onerror="this.style.display=\'none\'"><figcaption>Training History (click to enlarge)</figcaption></figure></div></div>';
+          }
+          evalContent.innerHTML = html;
+          evalContent.dataset.loaded = '1';
+        })().catch(e => {
+          evalContent.innerHTML = '<p class="eval-empty">Failed: ' + e.message + '</p>';
+        });
+      }
+    });
+
+    lightbox.addEventListener('click', () => { lightbox.classList.remove('visible'); });
+    evalContent.addEventListener('click', function(e) {
+      const img = e.target.closest('img[data-enlarge]');
+      if (img && img.src) { lightboxImg.src = img.src; lightbox.classList.add('visible'); }
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') lightbox.classList.remove('visible'); });
+  </script>
+</body>
+</html>

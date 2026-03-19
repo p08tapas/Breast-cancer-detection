@@ -1,3 +1,5 @@
+import json
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -13,7 +15,7 @@ from train import BATCH_SIZE
 
 
 def evaluate_model_with_tta(model, test_df, num_tta=10):
-    """Test-Time Augmentation: Create multiple augmented versions and average predictions."""
+    """Test-Time Augmentation: This will create multiple augmented versions and average predictions."""
     print("\nUsing Test-Time Augmentation (TTA)...")
     
     
@@ -82,6 +84,7 @@ def evaluate_model_with_tta(model, test_df, num_tta=10):
             gen_params['brightness_range'] = aug_config['brightness_range']
         
         tta_datagen = ImageDataGenerator(**gen_params)
+        
         tta_gen = tta_datagen.flow_from_dataframe(
             test_df,
             x_col='image_path',
@@ -148,7 +151,7 @@ def find_optimal_threshold(predictions_flat, true_labels):
     print(f"    Testing threshold {total_thresholds}/{total_thresholds} (0.69)...")
     
     if best_score == 0:
-        print("  No threshold met both requirements, finding best compromise...")
+        print("  No threshold met both requirements, finding best solution...")
         thresholds = np.arange(0.2, 0.8, 0.005)
         total_thresholds = len(thresholds)
         for idx, threshold in enumerate(thresholds):
@@ -243,7 +246,27 @@ def evaluate_model(model, test_generator, test_df, use_tta=True, num_tta=10):
     plt.tight_layout()
     plt.savefig('confusion_matrix.png', dpi=150)
     plt.close()
-    
+
+    type_i_error = fp / (fp + tn) if (fp + tn) > 0 else 0
+    type_ii_error = fn / (fn + tp) if (fn + tp) > 0 else 0
+    f1 = 2 * precision * sensitivity / (precision + sensitivity) if (precision + sensitivity) > 0 else 0
+    metrics_json = {
+        'accuracy': float(accuracy),
+        'precision': float(precision),
+        'recall': float(sensitivity),
+        'specificity': float(specificity),
+        'auc': float(auc),
+        'statistical_power': float(statistical_power),
+        'type_i_error': float(type_i_error),
+        'type_ii_error': float(type_ii_error),
+        'f1': float(f1),
+        'optimal_threshold': float(best_threshold),
+        'confusion_matrix': cm.tolist(),
+    }
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(script_dir, 'evaluation_metrics.json'), 'w') as f:
+        json.dump(metrics_json, f, indent=2)
+
     return {
         'accuracy': accuracy,
         'precision': precision,
@@ -255,8 +278,11 @@ def evaluate_model(model, test_generator, test_df, use_tta=True, num_tta=10):
         'optimal_threshold': best_threshold
     }
 
+
+
+
 def plot_history(history):
-    """Plot training history."""
+    """This is for plotting the training history."""
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
     epochs = range(1, len(history.history['accuracy']) + 1)
     
@@ -276,6 +302,8 @@ def plot_history(history):
     axes[0, 1].legend()
     axes[0, 1].grid(True, alpha=0.3)
     
+    
+    
     if 'precision' in history.history:
         axes[1, 0].plot(epochs, history.history['precision'], 'g-', label='Train', linewidth=2)
         axes[1, 0].plot(epochs, history.history['val_precision'], 'orange', label='Validation', linewidth=2)
@@ -284,6 +312,8 @@ def plot_history(history):
         axes[1, 0].set_ylabel('Precision')
         axes[1, 0].legend()
         axes[1, 0].grid(True, alpha=0.3)
+    
+    
     
     if 'auc' in history.history:
         axes[1, 1].plot(epochs, history.history['auc'], 'g-', label='Train', linewidth=2)

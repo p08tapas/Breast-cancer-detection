@@ -1,0 +1,17 @@
+# Exclude from gcloud app deploy (weights *.h5 and config are INCLUDED - required for inference)
+.git
+.gitignore
+.gcloudignore
+venv/
+env/
+ENV/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.vscode/
+.idea/
+*.md
+!app/README.md
+# Exclude large training data (not needed for inference)
+common/archive/
