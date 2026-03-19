@@ -352,7 +352,7 @@
 <body>
   <div id="mainContainer" class="container">
     <h1>Mammogram Inference APP using Deep Learning</h1>
-    <p class="sub">Upload a mammogram (JPEG/PNG).The app will give predictions from Prototype A (EfficientNetB0), B (ResNet50), and C (EfficientNetB0 + ResNet50).</p>
+    <p class="sub">Upload a mammogram (JPEG/PNG). The app will give predictions from Prototype A (EfficientNetB0), B (ResNet50), and C (EfficientNetB0 + ResNet50).</p>
 
     <nav class="tabs">
       <button type="button" id="tabUpload" class="active">Upload Mammogram</button>
@@ -388,7 +388,7 @@
       <div id="result" class="card result" style="display: none;">
         <h2>Results</h2>
         <div class="legend">
-          <strong>Legend:</strong> % = probability of malignancy. Each model uses its own optimal threshold. ≥ threshold → MALIGNANT; &lt; threshold → BENIGN.
+          <strong>Legend:</strong> % = probability of malignancy. Each model uses its own optimal threshold( Prototype A = 0.6, Prototype B = 0.375, Prototype C = 0.220 ). If probability ≥ threshold → MALIGNANT; If probability < threshold → BENIGN.
         </div>
         <div id="resultBody"></div>
         <p class="disclaimer">For research/educational use only. Not a substitute for clinical diagnosis.</p>
@@ -427,11 +427,6 @@
     
     
     
-    function setProgress(cur, tot) {
-      progressBar.style.width = (tot ? (100 * cur / tot) : 0) + '%';
-      progressText.textContent = cur + '/' + tot;
-    }
-
     fileInput.addEventListener('change', function() {
       const f = this.files[0];
       if (!f) return;
@@ -453,12 +448,30 @@
       errorEl.style.display = 'none';
       resultEl.style.display = 'none';
       progressSection.classList.add('visible');
-      setProgress(0, 1);
 
+      
+      
+      
+      
+      const useTtaB = form.querySelector('[name="use_tta_b"]').checked;
+      const useTtaC = form.querySelector('[name="use_tta_c"]').checked;
+      const totalSteps = 1 + (useTtaB ? 7 : 1) + (useTtaC ? 10 : 1);
+      let step = 0;
+      progressBar.style.width = '0%';
+      progressText.textContent = '0/' + totalSteps;
+      const progressInterval = setInterval(function() {
+        step = Math.min(step + 1, totalSteps);
+        progressBar.style.width = (100 * step / totalSteps) + '%';
+        progressText.textContent = step + '/' + totalSteps;
+        if (step >= totalSteps) clearInterval(progressInterval);
+      }, 1500);
+
+      
+      
       const fd = new FormData();
       fd.append('file', file);
-      fd.append('use_tta_b', form.querySelector('[name="use_tta_b"]').checked);
-      fd.append('use_tta_c', form.querySelector('[name="use_tta_c"]').checked);
+      fd.append('use_tta_b', useTtaB);
+      fd.append('use_tta_c', useTtaC);
 
       (async () => {
         const res = await fetch('/predict', { method: 'POST', body: fd });
@@ -467,7 +480,6 @@
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let buffer = '', data = null;
-
         while (true) {
           const { value, done } = await reader.read();
           if (done) break;
@@ -477,9 +489,8 @@
           for (const line of lines) {
             if (!line.trim()) continue;
             const obj = JSON.parse(line);
-            if (obj.type === 'progress') setProgress(obj.current, obj.total);
-            else if (obj.type === 'result') { data = obj.data; break; }
-            else if (obj.type === 'error') throw new Error(obj.detail);
+            if (obj.type === 'result') { data = obj.data; break; }
+            if (obj.type === 'error') throw new Error(obj.detail);
           }
           if (data) break;
         }
@@ -488,9 +499,10 @@
           if (obj.type === 'result') data = obj.data;
           else if (obj.type === 'error') throw new Error(obj.detail);
         }
-
         if (!data) throw new Error('No result received');
 
+        
+        
         const probs = data.probabilities || {};
         const labels = data.labels || {};
         const thresholds = data.thresholds || {};
@@ -515,6 +527,7 @@
         errorEl.textContent = err.message || 'Request failed';
         errorEl.style.display = 'block';
       }).finally(() => {
+        clearInterval(progressInterval);
         progressSection.classList.remove('visible');
         btn.disabled = false;
       });
