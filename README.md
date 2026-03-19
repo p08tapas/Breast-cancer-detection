@@ -14,7 +14,8 @@ CBIS-DDSM in `common/archive/`: `csv/` (mass_case_*, calc_case_* CSVs) and `jpeg
 
 ## Model weights
 
-Weights are included in the repo so that cloning and running the app yields the same results without retraining. Ensure `PrototypeA/best_model.weights.h5`, `PrototypeB/best_model.weights.h5`, `PrototypeC/best_model.weights.h5`, and `PrototypeC/best_model_config.json` are committed.
+Weights are not included in the repo (excluded by `.gitignore`). One must train the models first before running the inference app. After training, `PrototypeA/best_model.weights.h5`, `PrototypeB/best_model.weights.h5`, `PrototypeC/best_model.weights.h5`, and `PrototypeC/best_model_config.json` will be created locally.
+
 
 ## Training
 
