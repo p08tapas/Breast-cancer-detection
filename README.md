@@ -122,4 +122,4 @@ Please set these to override default weight paths:
 - 'WEIGHTS_A' — Prototype A weights (default: 'PrototypeA/best_model.weights.h5')
 - 'WEIGHTS_B' — Prototype B weights (default: 'PrototypeB/best_model.weights.h5')
 - 'WEIGHTS_C' — Prototype C weights (default: 'PrototypeC/best_model.weights.h5')
-- 'CONFIG_C' — Prototype C config JSON (default: 'PrototypeC/best_model_config.json')
+- 'CONFIG_C' — Prototype C config JSON (default: 'PrototypeC/best_model_config.json'}
