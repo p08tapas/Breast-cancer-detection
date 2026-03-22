@@ -107,3 +107,37 @@ def load_dataset():
     test_df_processed['label'] = test_df_processed['label'].astype(str)
     
     return train_df_processed, test_df_processed
+
+
+if __name__ == '__main__':
+    mass_train = pd.read_csv(os.path.join(CSV_DIR, 'mass_case_description_train_set.csv'))
+    calc_train = pd.read_csv(os.path.join(CSV_DIR, 'calc_case_description_train_set.csv'))
+    mass_test = pd.read_csv(os.path.join(CSV_DIR, 'mass_case_description_test_set.csv'))
+    calc_test = pd.read_csv(os.path.join(CSV_DIR, 'calc_case_description_test_set.csv'))
+    all_csv = pd.concat([mass_train, calc_train, mass_test, calc_test], ignore_index=True)
+    csv_uids = set()
+    for _, row in all_csv.iterrows():
+        uid = extract_series_uid(row.get('cropped image file path', ''))
+        if uid:
+            csv_uids.add(uid)
+    jpeg_uids = set()
+    if os.path.exists(JPEG_DIR):
+        for d in os.listdir(JPEG_DIR):
+            p = os.path.join(JPEG_DIR, d)
+            if os.path.isdir(p):
+                jpeg_uids.add(d)
+    jpeg_not_csv = jpeg_uids - csv_uids
+    csv_not_jpeg = csv_uids - jpeg_uids
+    overall = csv_uids | jpeg_uids
+    train_df_processed, test_df_processed = load_dataset()
+
+
+
+
+
+    print('SeriesInstanceUIDs in CSV:', len(csv_uids))
+    print('SeriesInstanceUIDs in JPEG:', len(jpeg_uids))
+    print('In JPEG but not in CSV:', len(jpeg_not_csv))
+    print('In CSV but not in JPEG:', len(csv_not_jpeg))
+    print('Overall SeriesInstanceUIDs:', len(overall))
+    print('Images loaded (train+test):', len(train_df_processed) + len(test_df_processed))
